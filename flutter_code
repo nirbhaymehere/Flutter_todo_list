@@ -1,0 +1,215 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'To-Do List App',
+      home: LoginPage(),
+    );
+  }
+}
+
+class LoginPage extends StatelessWidget {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  final String validUsername = "test@test.com";
+  final String validPassword = "123456";
+
+  void _login(BuildContext context) {
+    if (_usernameController.text == validUsername &&
+        _passwordController.text == validPassword) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TodoListScreen()),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Invalid Credentials'),
+          content: Text('Please enter the correct username and password.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Login'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(labelText: 'Username'),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => _login(context),
+              child: Text('Login'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TodoListScreen extends StatefulWidget {
+  @override
+  _TodoListScreenState createState() => _TodoListScreenState();
+}
+
+class _TodoListScreenState extends State<TodoListScreen> {
+  final List<Map<String, dynamic>> _tasks = [];
+  final TextEditingController _taskController = TextEditingController();
+
+  void _addTask(String title) {
+    setState(() {
+      _tasks.add({'title': title, 'isDone': false});
+    });
+  }
+
+  void _toggleTask(int index) {
+    setState(() {
+      _tasks[index]['isDone'] = !_tasks[index]['isDone'];
+    });
+  }
+
+  void _editTask(int index, String newTitle) {
+    setState(() {
+      _tasks[index]['title'] = newTitle;
+    });
+  }
+
+  void _deleteTask(int index) {
+    setState(() {
+      _tasks.removeAt(index);
+    });
+  }
+
+  void _showEditDialog(int index) {
+    TextEditingController _editController =
+    TextEditingController(text: _tasks[index]['title']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit Task'),
+        content: TextField(
+          controller: _editController,
+          decoration: InputDecoration(labelText: 'Task Title'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              _editTask(index, _editController.text);
+              Navigator.pop(context);
+            },
+            child: Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddTaskDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add Task'),
+        content: TextField(
+          controller: _taskController,
+          decoration: InputDecoration(labelText: 'Task Title'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _taskController.clear();
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (_taskController.text.isNotEmpty) {
+                _addTask(_taskController.text);
+                Navigator.pop(context);
+                _taskController.clear();
+              }
+            },
+            child: Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('To-Do List'),
+      ),
+      body: Container(
+        color: Colors.purple[50],
+        child: ListView.builder(
+          itemCount: _tasks.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              leading: Checkbox(
+                value: _tasks[index]['isDone'],
+                onChanged: (value) => _toggleTask(index),
+              ),
+              title: GestureDetector(
+                onTap: () => _showEditDialog(index),
+                child: Text(
+                  _tasks[index]['title'],
+                  style: TextStyle(
+                    decoration: _tasks[index]['isDone']
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                  ),
+                ),
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _deleteTask(index),
+              ),
+            );
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddTaskDialog,
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+}
